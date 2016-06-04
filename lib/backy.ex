@@ -3,6 +3,7 @@ defmodule Backy do
 
   alias Backy.Job
   alias Backy.JobStore
+  alias Backy.JobProcess
   alias Backy.JobRunner
   alias Backy.JobPoller
 
@@ -19,7 +20,7 @@ defmodule Backy do
   Keep a job alive
   """
   def touch(%Job{} = job) do
-    JobStore.touch(job)
+    job |> JobProcess.touch |> JobStore.touch
   end
 
   # See http://elixir-lang.org/docs/stable/elixir/Application.html
