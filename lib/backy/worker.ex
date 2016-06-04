@@ -12,9 +12,12 @@ defmodule Backy.Worker do
     end
 
     quote do
-      # Delegate to perform without arguments when arguments are [],
-      # you can define a perform with an argument to override this.
+      # Delegate perform
       def perform(job, []) do
+        perform(job)
+      end
+
+      def perform(job, nil) do
         perform(job)
       end
 
@@ -26,7 +29,6 @@ defmodule Backy.Worker do
         unquote(opts[:max_runtime] || 30)
       end
 
-      defoverridable [perform: 2]
     end
   end
 end

@@ -4,6 +4,7 @@ defmodule Backy do
   alias Backy.Job
   alias Backy.JobStore
   alias Backy.JobRunner
+  alias Backy.JobPoller
 
   @doc """
   Enqueue a job to be run immediately
@@ -29,6 +30,7 @@ defmodule Backy do
     children = [
       worker(JobStore, []),
       worker(JobRunner, []),
+      worker(JobPoller, []),
     ]
 
     # Restart everything on failure
