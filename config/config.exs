@@ -28,3 +28,16 @@ use Mix.Config
 # here (which is why it is important to import them last).
 #
 #     import_config "#{Mix.env}.exs"
+
+# The :db config is passed directly to Postgrex start_link
+config :backy, :db,
+  database: "backy"
+
+config :backy,
+  table_name: "jobs",
+  retry_count: 3,
+  retry_delay: fn (retry) -> :math.pow(retry, 3) + 100 end
+
+if Mix.env == :test do
+  config :backy, retry_delay: 10
+end

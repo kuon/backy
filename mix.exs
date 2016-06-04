@@ -14,7 +14,8 @@ defmodule Backy.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:logger]]
+    [applications: [:logger, :postgrex, :poison],
+     mod: {Backy, []}]
   end
 
   # Dependencies can be Hex packages:
@@ -27,6 +28,8 @@ defmodule Backy.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    []
+    [{:postgrex, "~> 0.11"},
+     {:poison, "~> 2.0"},
+     {:mix_test_watch, "~> 0.2", only: :dev}]
   end
 end
