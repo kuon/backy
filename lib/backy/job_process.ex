@@ -47,7 +47,7 @@ defmodule Backy.JobProcess do
       send(parent, run_job_and_capture_result(%{job | process_pid: parent}))
     end
 
-    {:ok, timer} = :timer.send_after(job.worker.max_runtime, :timeout)
+    timer = Process.send_after(self, :timeout, job.worker.max_runtime)
     wait_for_result(pid, job.worker.max_runtime, timer)
   end
 
@@ -56,19 +56,18 @@ defmodule Backy.JobProcess do
       job.worker.perform(job, job.arguments)
       :ok
     rescue
-      error ->
-
-      IO.inspect(error)
-        {:error, error}
+      error -> {:error, error}
     end
   end
 
   defp wait_for_result(pid, max_runtime, timer \\ nil) do
     receive do
       {:DOWN, _ref, :process, _pid, :normal} ->
-        # both errors and successes result in a normal exit, wait for more information
+        # both errors and successes result in a normal exit,
+        # wait for more information
         wait_for_result(pid, max_runtime)
-      {:DOWN, _ref, :process, _pid, error} -> # Failed beause the process crashed
+      {:DOWN, _ref, :process, _pid, error} ->
+        # Failed beause the process crashed
         "job runner crashed: #{error}"
         |> wrap_in_crash_error
       {:error, error} ->
@@ -77,8 +76,8 @@ defmodule Backy.JobProcess do
         Process.exit(pid, :kill)
         wait_for_result(pid, max_runtime)
       :touch ->
-        :timer.cancel(timer)
-        {:ok, timer} = :timer.send_after(max_runtime, :timeout)
+        Process.cancel_timer(timer)
+        timer = Process.send_after(self, :timeout, max_runtime)
         wait_for_result(pid, max_runtime, timer)
       :ok ->
         :ok
