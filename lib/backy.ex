@@ -10,6 +10,8 @@ defmodule Backy do
   @doc """
   Enqueue a job to be run immediately. The job will be persisted and then
   queued to be run immediately on the current node.
+
+  This function returns only after the job has been persisted.
   """
   def enqueue(worker, arguments \\ []) do
     %Job{worker: worker, arguments: arguments}
