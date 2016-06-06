@@ -8,7 +8,8 @@ defmodule Backy do
   alias Backy.JobPoller
 
   @doc """
-  Enqueue a job to be run immediately
+  Enqueue a job to be run immediately. The job will be persisted and then
+  queued to be run immediately on the current node.
   """
   def enqueue(worker, arguments \\ []) do
     %Job{worker: worker, arguments: arguments}
@@ -17,7 +18,14 @@ defmodule Backy do
   end
 
   @doc """
-  Keep a job alive
+  Touch a job to avoid it to timeout.
+
+  This is intended to be called from within worker if your job is long.
+
+  For example, you might have an encoding job that take any time to finish
+  depending on the lenght of the video. You will set the `max_runtime` or the
+  worker to a couple of minutes, and in your `perform` function inside
+  the worker, you will call this function to extend your job lifetime.
   """
   def touch(%Job{} = job) do
     job |> JobProcess.touch |> JobStore.touch
