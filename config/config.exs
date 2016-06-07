@@ -37,7 +37,8 @@ config :backy,
   table_name: "jobs",
   retry_count: 3,
   retry_delay: fn (retry) -> :math.pow(retry, 3) + 100 end,
-  poll_interval: 1000
+  poll_interval: 1000,
+  delete_finished_jobs: true
 
 if Mix.env == :test do
   config :backy, retry_delay: 10

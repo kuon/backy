@@ -45,7 +45,10 @@ config :backy,
   table_name: "jobs", # The postgresql table name
   retry_count: 3, # The number of retry for a job before marking it as failed
   retry_delay: fn (retry) -> :math.pow(retry, 3) + 100 end, # Retry delay
-  poll_interval: 1000 # Polling interval for the job poller
+  poll_interval: 1000, # Polling interval for the job poller
+  # If false, jobs will be marked as finished, otherwise they are deleted
+  # If false, you are responsible for purging the jobs table
+  delete_finished_jobs: true
 ```
 
 

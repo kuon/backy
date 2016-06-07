@@ -4,7 +4,6 @@ defmodule Backy.JobPoller do
   alias Backy.Job
   alias Backy.JobStore
   alias Backy.JobRunner
-  alias Backy.JobConcurrencyLimiter
 
   defmodule State do
     defstruct timer: nil
@@ -19,7 +18,7 @@ defmodule Backy.JobPoller do
     {:ok, state}
   end
 
-  def terminate(reason, state) do
+  def terminate(_reason, state) do
     if state.timer do
       :timer.cancel(state.timer)
     end

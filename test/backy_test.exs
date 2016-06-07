@@ -25,5 +25,6 @@ defmodule BackyTest do
 
     #:timer.sleep 1 # allow persistence some time to remove the job
     #assert Toniq.JobPersistence.jobs == []
+    assert Backy.JobStore.reserve == nil
   end
 end

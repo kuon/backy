@@ -11,7 +11,7 @@ defmodule Backy.JobStore do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
   end
 
-  def init(state) do
+  def init(_state) do
     config = Keyword.merge(Application.get_env(:backy, :db), [
       extensions: [{Postgrex.Extensions.JSON, library: Poison}]
     ])
@@ -42,10 +42,16 @@ defmodule Backy.JobStore do
     {:reply, job, state}
   end
   def handle_call({:mark_as_finished, job}, _from, %State{} = state) do
-    Postgrex.query!(state.db,
-      "UPDATE #{state.table} \
-       SET finished_at = now(), status = 'finished' \
-       WHERE id = $1::int", [job.id])
+    if delete_finished_jobs do
+      Postgrex.query!(state.db,
+        "DELETE FROM #{state.table} \
+         WHERE id = $1::int", [job.id])
+    else
+      Postgrex.query!(state.db,
+        "UPDATE #{state.table} \
+         SET finished_at = now(), status = 'finished' \
+         WHERE id = $1::int", [job.id])
+    end
     {:reply, job, state}
   end
   def handle_call({:mark_as_failed, job, error}, _from, %State{} = state) do
@@ -123,5 +129,8 @@ defmodule Backy.JobStore do
   end
   defp decode_args(args), do: args
 
+  defp delete_finished_jobs do
+    Application.get_env(:backy, :delete_finished_jobs)
+  end
 
 end
