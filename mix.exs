@@ -7,6 +7,8 @@ defmodule Backy.Mixfile do
      elixir: "~> 1.2",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
+     description: description,
+     package: package,
      deps: deps]
   end
 
@@ -18,18 +20,23 @@ defmodule Backy.Mixfile do
      mod: {Backy, []}]
   end
 
-  # Dependencies can be Hex packages:
-  #
-  #   {:mydep, "~> 0.3.0"}
-  #
-  # Or git/path repositories:
-  #
-  #   {:mydep, git: "https://github.com/elixir-lang/mydep.git", tag: "0.1.0"}
-  #
-  # Type "mix help deps" for more examples and options
   defp deps do
     [{:postgrex, "~> 0.11"},
      {:poison, "~> 2.0"},
      {:mix_test_watch, "~> 0.2", only: :dev}]
+  end
+
+  defp description do
+  """
+  A simple background job queue backed by postgresql.
+  """
+  end
+
+  defp package do
+    [name: :backy,
+     files: ["lib", "priv", "mix.exs", "README*", "LICENSE*", "config"],
+     maintainers: ["Nicolas Goy"],
+     licenses: ["MIT"],
+     links: %{"GitHub" => "https://github.com/kuon/backy"}]
   end
 end
