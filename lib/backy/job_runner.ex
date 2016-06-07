@@ -54,7 +54,7 @@ defmodule Backy.JobRunner do
   end
 
   defp retry_delay(retry) do
-    delay = Application.get_env(:backy, :retry_delay)
+    delay = Backy.Config.get(:retry_delay)
     if is_function(delay) do
       delay.(retry)
     else
@@ -63,7 +63,7 @@ defmodule Backy.JobRunner do
   end
 
   defp retry_count do
-    Application.get_env(:backy, :retry_count)
+    Backy.Config.get(:retry_count)
   end
 
 end

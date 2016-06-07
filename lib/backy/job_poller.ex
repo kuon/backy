@@ -46,7 +46,7 @@ defmodule Backy.JobPoller do
   end
 
   defp poll_interval do
-    Application.get_env(:backy, :poll_interval)
+    Backy.Config.get(:poll_interval)
   end
 
 

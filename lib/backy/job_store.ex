@@ -12,13 +12,14 @@ defmodule Backy.JobStore do
   end
 
   def init(_state) do
-    config = Keyword.merge(Application.get_env(:backy, :db), [
+    config = Keyword.merge(Backy.Config.get(:db), [
       extensions: [{Postgrex.Extensions.JSON, library: Poison}]
     ])
-    table_name = Application.get_env(:backy, :table_name)
+    table = Backy.Config.get(:table_name)
+
 
     {:ok, pid} = Postgrex.start_link(config)
-    {:ok, %State{db: pid, table: table_name}}
+    {:ok, %State{db: pid, table: table}}
   end
 
   def persist(%Job{id: nil} = job) do
@@ -130,7 +131,7 @@ defmodule Backy.JobStore do
   defp decode_args(args), do: args
 
   defp delete_finished_jobs do
-    Application.get_env(:backy, :delete_finished_jobs)
+    Backy.Config.get(:delete_finished_jobs)
   end
 
 end

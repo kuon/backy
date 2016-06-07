@@ -34,7 +34,7 @@ defmodule Backy.Mixfile do
 
   defp package do
     [name: :backy,
-     files: ["lib", "priv", "mix.exs", "README*", "LICENSE*", "config"],
+     files: ["lib", "mix.exs", "README*", "LICENSE*"],
      maintainers: ["Nicolas Goy"],
      licenses: ["MIT"],
      links: %{"GitHub" => "https://github.com/kuon/backy"}]
