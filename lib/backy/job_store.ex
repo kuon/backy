@@ -29,10 +29,10 @@ defmodule Backy.JobStore do
 
   def handle_call({:persist, job}, _from, %State{} = state) do
     res = Postgrex.query!(state.db,
-      "INSERT INTO #{state.table} \
-      (worker, arguments, status, expires_at, enqueued_at) \
-      VALUES \
-      ($1, $2, 'reserved', now() + ($3 || ' milliseconds')::INTERVAL, now()) \
+      "INSERT INTO #{state.table}
+      (worker, arguments, status, expires_at, enqueued_at)
+      VALUES
+      ($1, $2, 'reserved', now() + ($3 || ' milliseconds')::INTERVAL, now())
       RETURNING id", [
       Atom.to_string(job.worker),
       Enum.into(job.arguments, %{}),
@@ -45,27 +45,27 @@ defmodule Backy.JobStore do
   def handle_call({:mark_as_finished, job}, _from, %State{} = state) do
     if delete_finished_jobs do
       Postgrex.query!(state.db,
-        "DELETE FROM #{state.table} \
+        "DELETE FROM #{state.table}
          WHERE id = $1::int", [job.id])
     else
       Postgrex.query!(state.db,
-        "UPDATE #{state.table} \
-         SET finished_at = now(), status = 'finished' \
+        "UPDATE #{state.table}
+         SET finished_at = now(), status = 'finished'
          WHERE id = $1::int", [job.id])
     end
     {:reply, job, state}
   end
   def handle_call({:mark_as_failed, job, error}, _from, %State{} = state) do
     Postgrex.query!(state.db,
-      "UPDATE #{state.table} \
-       SET failed_at = now(), status = 'failed', error = $2 \
+      "UPDATE #{state.table}
+       SET failed_at = now(), status = 'failed', error = $2
        WHERE id = $1::int", [job.id, inspect(error)])
     {:reply, job, state}
   end
   def handle_call({:touch, job}, _from, %State{} = state) do
     Postgrex.query!(state.db,
-      "UPDATE #{state.table} \
-       SET expires_at = now() + ($2 || ' milliseconds')::INTERVAL \
+      "UPDATE #{state.table}
+       SET expires_at = now() + ($2 || ' milliseconds')::INTERVAL
        WHERE id = $1::int", [job.id,
        Integer.to_string((job.worker.requeue_delay + job.worker.max_runtime) |> trunc)
     ])
@@ -73,14 +73,14 @@ defmodule Backy.JobStore do
   end
   def handle_call(:reserve, _from, %State{} = state) do
     res = Postgrex.query!(state.db,
-      "UPDATE #{state.table} \
-       SET expires_at = now() + ('1 hour')::INTERVAL, status = 'reserved' \
-       WHERE id IN ( \
-         SELECT id FROM #{state.table} \
-         WHERE status = 'new' OR \
-         (status = 'reserved' AND expires_at < now()) \
+      "UPDATE #{state.table}
+       SET expires_at = now() + ('1 hour')::INTERVAL, status = 'reserved'
+       WHERE id IN (
+         SELECT id FROM #{state.table}
+         WHERE status = 'new' OR
+         (status = 'reserved' AND expires_at < now())
          LIMIT 1
-       ) \
+       )
        RETURNING id, worker, arguments",
     [])
 

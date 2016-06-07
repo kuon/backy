@@ -1,5 +1,15 @@
 defmodule Mix.Tasks.Backy.Setup do
   use Mix.Task
+
+  @shortdoc "Create the job table"
+  @moduledoc """
+  Create the job table. If the job table does exists, don't override it.
+
+  This task supports a drop option to drop the table if it exists:
+
+      mix backy.setup --drop
+  """
+
   def run(args) do
     Application.ensure_all_started(:postgrex)
 
@@ -33,7 +43,7 @@ BEGIN
     END IF;
 END$$;", [])
 
-    Postgrex.query!(conn, "CREATE TABLE IF NOT EXISTS #{table} (\
+    Postgrex.query!(conn, "CREATE TABLE IF NOT EXISTS #{table} (
     id serial primary key,
     worker varchar(1024) not null,
     arguments jsonb,
