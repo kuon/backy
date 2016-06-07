@@ -1,7 +1,7 @@
 defmodule Mix.Tasks.Backy.Setup do
   use Mix.Task
   def run(args) do
-    Mix.Task.run("app.start", [])
+    Application.ensure_all_started(:postgrex)
 
     {opts, _, _} = args |> OptionParser.parse(strict: [drop: :boolean])
 
