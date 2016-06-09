@@ -51,6 +51,26 @@ config :backy,
   delete_finished_jobs: true
 ```
 
+## Setup
+
+To create the job table, run:
+
+```
+mix backy.setup
+```
+
+### Ecto/Phoenix configuration
+
+If you use backy with ecto/phoenix, you may include backy mix tasks
+in `ecto.reset` like so:
+
+```elixir
+defp aliases do
+  ["ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
+   "test": ["ecto.create --quiet", "ecto.migrate", "test"],
+   "ecto.reset": ["ecto.drop", "ecto.create", "backy.setup", "ecto.setup"]]
+end
+```
 
 ## Writing a worker
 
