@@ -6,6 +6,7 @@ defmodule Backy do
   alias Backy.JobProcess
   alias Backy.JobRunner
   alias Backy.JobPoller
+  alias Backy.JobConcurrencyLimiter
 
   @doc """
   Enqueue a job to be run immediately. The job will be persisted and then
@@ -42,6 +43,7 @@ defmodule Backy do
       worker(JobStore, []),
       worker(JobRunner, []),
       worker(JobPoller, []),
+      worker(JobConcurrencyLimiter, []),
     ]
 
     # Restart everything on failure
