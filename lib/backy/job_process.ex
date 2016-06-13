@@ -56,7 +56,7 @@ defmodule Backy.JobProcess do
       job.worker.perform(job, job.arguments)
       :ok
     rescue
-      error -> {:error, error}
+      error -> {:error, Exception.format(:error, error)}
     end
   end
 
@@ -67,9 +67,7 @@ defmodule Backy.JobProcess do
         # wait for more information
         wait_for_result(pid, max_runtime)
       {:DOWN, _ref, :process, _pid, error} ->
-        # Failed beause the process crashed
-        "job runner crashed: #{error}"
-        |> wrap_in_crash_error
+        Exception.format_banner(:error, error)
       {:error, error} ->
         error
       :timeout ->
@@ -84,18 +82,4 @@ defmodule Backy.JobProcess do
     end
   end
 
-  defmodule CrashError do
-    @moduledoc """
-      Represents a process crash. Ensures we always return an error struct,
-      even if the crash didn't occur from a raised error.
-
-      Keeps the consuming code simple.
-    """
-
-    defstruct message: ""
-  end
-
-  defp wrap_in_crash_error(message) do
-    %CrashError{message: message}
-  end
 end

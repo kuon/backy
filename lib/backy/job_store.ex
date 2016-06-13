@@ -59,7 +59,7 @@ defmodule Backy.JobStore do
     Postgrex.query!(state.db,
       "UPDATE #{state.table}
        SET failed_at = now(), status = 'failed', error = $2
-       WHERE id = $1::int", [job.id, inspect(error)])
+       WHERE id = $1::int", [job.id, error])
     {:reply, job, state}
   end
   def handle_call({:touch, job}, _from, %State{} = state) do
