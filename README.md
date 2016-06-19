@@ -74,6 +74,10 @@ end
 
 ## Writing a worker
 
+IMPORTANT: Jobs will always receive maps instead of keyword list, because of
+JSON serialization, the order of key is not guaranteed, for this reason
+all the keyword lists are converted to maps.
+
 ```elixir
 defmodule TestWorker do
   use Backy.Worker,
@@ -88,7 +92,7 @@ defmodule TestWorker do
 
 
   # The following example runs for 30 sec while the max runtime is 20 sec
-  def perform(%Backy.Job{} = job, name: name) do
+  def perform(%Backy.Job{} = job, %{name: name}) do
     IO.puts("Job started for #{name}")
     :timer.sleep(10000) # Simulate work for 10 sec
     # We have still work to do, max runtime is 20sec, avoid a timeout

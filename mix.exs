@@ -3,7 +3,7 @@ defmodule Backy.Mixfile do
 
   def project do
     [app: :backy,
-     version: "0.0.5",
+     version: "0.0.6",
      elixir: "~> 1.2",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
@@ -23,6 +23,8 @@ defmodule Backy.Mixfile do
   defp deps do
     [{:postgrex, "~> 0.11"},
      {:poison, "~> 2.0"},
+     {:ex_doc, ">= 0.0.0", only: :dev},
+     {:markdown, github: "devinus/markdown", only: :dev},
      {:mix_test_watch, "~> 0.2", only: :dev}]
   end
 

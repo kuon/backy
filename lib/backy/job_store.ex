@@ -22,24 +22,27 @@ defmodule Backy.JobStore do
     {:ok, %State{db: pid, table: table}}
   end
 
-  def persist(%Job{id: nil} = job) do
-    GenServer.call(__MODULE__, {:persist, job})
+  def persist(job, reserved \\ true)
+  def persist(%Job{id: nil} = job, reserved) do
+    GenServer.call(__MODULE__, {:persist, job, reserved})
   end
-  def persist(%Job{}), do: raise "job already persisted"
+  def persist(%Job{}, _reserved), do: raise "job already persisted"
 
-  def handle_call({:persist, job}, _from, %State{} = state) do
+  def handle_call({:persist, job, reserved}, _from, %State{} = state) do
+    args = normalize_args(job.arguments)
     res = Postgrex.query!(state.db,
       "INSERT INTO #{state.table}
       (worker, arguments, status, expires_at, enqueued_at)
       VALUES
-      ($1, $2, 'reserved', now() + ($3 || ' milliseconds')::INTERVAL, now())
+      ($1, $2, $4, now() + ($3 || ' milliseconds')::INTERVAL, now())
       RETURNING id", [
       Atom.to_string(job.worker),
-      Enum.into(job.arguments, %{}),
-      Integer.to_string((job.worker.requeue_delay + job.worker.max_runtime) |> trunc)
+      args,
+      Integer.to_string((job.worker.requeue_delay + job.worker.max_runtime) |> trunc),
+      (if reserved, do: "reserved", else: "new")
     ])
 
-    job = %{job | id: res.rows |> List.first |> List.first}
+    job = %{job | id: (res.rows |> List.first |> List.first), arguments: args}
     {:reply, job, state}
   end
   def handle_call({:mark_as_finished, job}, _from, %State{} = state) do
@@ -87,7 +90,7 @@ defmodule Backy.JobStore do
     if res.num_rows > 0 do
       row = List.first(res.rows)
       job = try do
-        args = Enum.at(row, 2) |> decode_args
+        args = Enum.at(row, 2) |> normalize_args
         %Job{id: Enum.at(row, 0),
                       worker: String.to_existing_atom(Enum.at(row, 1)),
                       arguments: args}
@@ -120,15 +123,28 @@ defmodule Backy.JobStore do
     GenServer.call(__MODULE__, {:mark_as_failed, job, error})
   end
 
-  defp decode_args(args) when is_list(args) do
-    Enum.map(args, &decode_args/1)
+  defp normalize_args(args) when is_list(args) do
+    case Keyword.keyword?(args) do
+      true -> normalize_args(Enum.into(args, %{}))
+      _ -> Enum.map(args, &normalize_args/1)
+    end
   end
-  defp decode_args(args) when is_map(args) do
+  defp normalize_args(args) when is_map(args) do
     Enum.map(args, fn({key, value}) ->
-      {String.to_atom(key), decode_args(value)}
-    end)
+      {normalize_key(key), normalize_args(value)}
+    end) |> Enum.into(%{})
   end
-  defp decode_args(args), do: args
+  defp normalize_args(args) when is_tuple(args) do
+    case Keyword.keyword?([args]) do
+      true -> normalize_args(Enum.into([args], %{}))
+      _ -> normalize_args(Tuple.to_list(args))
+    end
+  end
+  defp normalize_args(args), do: args
+
+  defp normalize_key(key) when is_atom(key), do: key
+  defp normalize_key(key) when is_binary(key), do: String.to_atom(key)
+  defp normalize_key(key), do: normalize_key(inspect(key))
 
   defp delete_finished_jobs do
     Backy.Config.get(:delete_finished_jobs)
