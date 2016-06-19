@@ -2,6 +2,10 @@ defmodule BackyTest do
   use ExUnit.Case
   doctest Backy
 
+  defmodule User do
+    defstruct [name: nil]
+  end
+
   defmodule TestWorker do
     use Backy.Worker, max_concurrency: 10
 
@@ -35,6 +39,12 @@ defmodule BackyTest do
     assert_receive { :job_has_been_run, name_was: "Single arg" }
     :timer.sleep 100
 
+    job = Backy.enqueue(TestWorker, %User{name: "user name"})
+    assert(job.id)
+    assert_receive { :job_has_been_run, name_was: "user name" }
+    :timer.sleep 100
+
+
     job = Backy.enqueue(TestWorker, width: 1024, height: 768)
     assert(job.id)
     assert_receive { :job_has_been_run, width_was: 1024, height_was: 768 }
@@ -48,6 +58,8 @@ defmodule BackyTest do
     assert(job.id)
     job = store_only(TestWorker, name: "Single arg")
     assert(job.id)
+    job = store_only(TestWorker, %User{name: "user name"})
+    assert(job.id)
     job = store_only(TestWorker, width: 1024, height: 768)
     assert(job.id)
 
@@ -55,6 +67,7 @@ defmodule BackyTest do
 
     assert_receive { :job_has_been_run, name_was: "Jon Doe", arg1_was: "Hello" }
     assert_receive { :job_has_been_run, name_was: "Single arg" }
+    assert_receive { :job_has_been_run, name_was: "user name" }
     assert_receive { :job_has_been_run, width_was: 1024, height_was: 768 }
 
     assert Backy.JobStore.reserve == nil

@@ -129,6 +129,9 @@ defmodule Backy.JobStore do
       _ -> Enum.map(args, &normalize_args/1)
     end
   end
+  defp normalize_args(%{__struct__: _} = args) when is_map(args) do
+    normalize_args(Map.from_struct(args))
+  end
   defp normalize_args(args) when is_map(args) do
     Enum.map(args, fn({key, value}) ->
       {normalize_key(key), normalize_args(value)}
