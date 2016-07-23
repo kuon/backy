@@ -75,7 +75,7 @@ defmodule Backy.JobStore do
     {:reply, job, state}
   end
   def handle_call(:reserve, _from, %State{} = state) do
-    res = Postgrex.query!(state.db,
+    Postgrex.query(state.db,
       "UPDATE #{state.table}
        SET expires_at = now() + ('1 hour')::INTERVAL, status = 'reserved'
        WHERE id IN (
@@ -86,20 +86,20 @@ defmodule Backy.JobStore do
        )
        RETURNING id, worker, arguments",
     [])
-
-    if res.num_rows > 0 do
-      row = List.first(res.rows)
-      job = try do
-        args = Enum.at(row, 2) |> normalize_args
-        %Job{id: Enum.at(row, 0),
-                      worker: String.to_existing_atom(Enum.at(row, 1)),
-                      arguments: args}
-      rescue
-        ArgumentError -> nil
-      end
-      {:reply, job, state}
-    else
-      {:reply, nil, state}
+    |> case do
+      {:ok, %{num_rows: n, rows: rows}} when n > 0 ->
+        row = List.first(rows)
+        job = try do
+          args = Enum.at(row, 2) |> normalize_args
+          %Job{id: Enum.at(row, 0),
+                        worker: String.to_existing_atom(Enum.at(row, 1)),
+                        arguments: args}
+        rescue
+          ArgumentError -> nil
+        end
+        {:reply, job, state}
+      _ ->
+        {:reply, nil, state}
     end
   end
 
