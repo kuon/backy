@@ -1,9 +1,9 @@
-# WORK IN PROGRESS, DO NOT USE YET
-
 # Backy
 
 Simple background job backed by PostgreSQL for Elixir.
 
+**NOTE**: Backy is still in very early stage of development and might not be
+stable yet.
 
 ## Installation
 
