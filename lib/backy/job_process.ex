@@ -74,9 +74,11 @@ defmodule Backy.JobProcess do
         Process.exit(pid, :kill)
         wait_for_result(pid, max_runtime)
       :touch ->
-        if timer do
-          Process.cancel_timer(timer)
-          timer = Process.send_after(self, :timeout, max_runtime)
+        timer = case timer do
+          nil -> nil
+          timer ->
+            Process.cancel_timer(timer)
+            Process.send_after(self, :timeout, max_runtime)
         end
         wait_for_result(pid, max_runtime, timer)
       :ok ->
