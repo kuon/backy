@@ -1,7 +1,10 @@
+Postgrex.Types.define(Backy.PostgrexTypes, [], json: Poison)
+
 defmodule Backy.JobStore do
   use GenServer
 
   alias Backy.Job
+  require Backy.PostgrexTypes
 
   defmodule State do
     defstruct db: nil, table: nil
@@ -13,7 +16,7 @@ defmodule Backy.JobStore do
 
   def init(_state) do
     config = Keyword.merge(Backy.Config.get(:db), [
-      extensions: [{Postgrex.Extensions.JSON, library: Poison}]
+      types: Backy.PostgrexTypes
     ])
     table = Backy.Config.get(:table_name)
 
