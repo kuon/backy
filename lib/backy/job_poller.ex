@@ -14,7 +14,7 @@ defmodule Backy.JobPoller do
   end
 
   def init(state) do
-    import_jobs
+    import_jobs()
     {:ok, state}
   end
 
@@ -31,7 +31,7 @@ defmodule Backy.JobPoller do
 
     drain_queue(JobStore.reserve)
 
-    {:ok, timer} = :timer.apply_after(poll_interval, __MODULE__, :import_jobs, [])
+    {:ok, timer} = :timer.apply_after(poll_interval(), __MODULE__, :import_jobs, [])
     {:noreply, %{state | timer: timer}}
   end
 

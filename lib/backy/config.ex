@@ -11,6 +11,6 @@ defmodule Backy.Config do
   end
 
   def get(key) do
-    Application.get_env(:backy, key, Map.get(default_config, key))
+    Application.get_env(:backy, key, Map.get(default_config(), key))
   end
 end

@@ -49,7 +49,7 @@ defmodule Backy.JobStore do
     {:reply, job, state}
   end
   def handle_call({:mark_as_finished, job}, _from, %State{} = state) do
-    if delete_finished_jobs do
+    if delete_finished_jobs() do
       Postgrex.query!(state.db,
         "DELETE FROM #{state.table}
          WHERE id = $1::int", [job.id])

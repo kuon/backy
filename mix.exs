@@ -3,13 +3,13 @@ defmodule Backy.Mixfile do
 
   def project do
     [app: :backy,
-     version: "0.0.12",
+     version: "0.0.13",
      elixir: "~> 1.2",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     description: description,
-     package: package,
-     deps: deps]
+     description: description(),
+     package: package(),
+     deps: deps()]
   end
 
   # Configuration for the OTP application

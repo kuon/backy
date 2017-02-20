@@ -32,7 +32,7 @@ defmodule Backy.JobRunner do
   defp retry_job(result), do: retry_job(result, 1)
   defp retry_job({:ok, job}, _retry), do: {:ok, job}
   defp retry_job({:error, job, error}, retry) do
-    if retry <= retry_count do
+    if retry <= retry_count() do
       retry_delay(retry)
       |> trunc
       |> :timer.sleep

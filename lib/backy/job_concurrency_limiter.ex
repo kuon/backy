@@ -32,7 +32,7 @@ defmodule Backy.JobConcurrencyLimiter do
 
   @doc """
   "run" gets called by all client processes. E.g. if you enqueue 10000 jobs, this
-  gets called 10000 times. Each call tells the concurrency limiter about itself and
+  gets called 10000 times. Each call tells the concurrency limiter about itself() and
   waits for it's turn to run.
 
   The limiter keeps a count of running jobs and if there are more running jobs than
@@ -57,7 +57,7 @@ defmodule Backy.JobConcurrencyLimiter do
   defp run_job(job), do: JobProcess.run(job)
 
   defp request_run(job) do
-    GenServer.cast(__MODULE__, {:request_run, job, self})
+    GenServer.cast(__MODULE__, {:request_run, job, self()})
   end
 
   defp confirm_run(job) do

@@ -41,13 +41,13 @@ defmodule Backy.JobProcess do
   end
 
   defp run_job(job) do
-    parent = self
+    parent = self()
 
     {pid, _} = spawn_monitor fn ->
       send(parent, run_job_and_capture_result(%{job | process_pid: parent}))
     end
 
-    timer = Process.send_after(self, :timeout, job.worker.max_runtime)
+    timer = Process.send_after(self(), :timeout, job.worker.max_runtime)
     wait_for_result(pid, job.worker.max_runtime, timer)
   end
 
@@ -78,7 +78,7 @@ defmodule Backy.JobProcess do
           nil -> nil
           timer ->
             Process.cancel_timer(timer)
-            Process.send_after(self, :timeout, max_runtime)
+            Process.send_after(self(), :timeout, max_runtime)
         end
         wait_for_result(pid, max_runtime, timer)
       :ok ->
