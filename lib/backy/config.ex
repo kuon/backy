@@ -14,7 +14,6 @@ defmodule Backy.Config do
     config = Application.get_env(:backy, key, Map.get(default_config(), key))
     {url, config} = Keyword.pop(config, :url)
     Keyword.merge(config, parse_url(url))
-    |> IO.inspect
   end
 
   def get(key) do
