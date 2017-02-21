@@ -30,7 +30,7 @@ defmodule BackyTest do
   end
 
   setup do
-    Process.register(self, :backy_test)
+    Process.register(self(), :backy_test)
     :ok
   end
 
