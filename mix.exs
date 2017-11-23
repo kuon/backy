@@ -22,7 +22,7 @@ defmodule Backy.Mixfile do
 
   defp deps do
     [{:postgrex, "~> 0.13"},
-     {:poison, "~> 2.0"},
+     {:poison, "~> 3.1 or ~> 3.0"},
      {:ex_doc, ">= 0.0.0", only: :dev},
      {:markdown, github: "devinus/markdown", only: :dev},
      {:mix_test_watch, "~> 0.2", only: :dev}]
