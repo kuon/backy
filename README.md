@@ -5,15 +5,17 @@ Simple background job backed by PostgreSQL for Elixir.
 **NOTE**: Backy is still in very early stage of development and might not be
 stable yet.
 
+[API Doc](https://hexdocs.pm/backy/api-reference.html)
+
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed as:
+The package can be installed as:
 
 1. Add backy to your list of dependencies in `mix.exs`:
-  
+
 ```elixir
 def deps do
-  [{:backy, "~> 0.0.1"}]
+  [{:backy, "~> 0.0.16"}]
 end
 ```
 
