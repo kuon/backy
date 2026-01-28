@@ -18,13 +18,15 @@ defmodule Mix.Tasks.Backy.CreateMigration do
   """
 
   def run(args) do
-    {opts, _, _} = args |> OptionParser.parse(strict: [path: :string,
-                                                       name: :string,
-                                                       jobs: :string,
-                                                       repo: :string])
+    {opts, _, _} =
+      args
+      |> OptionParser.parse(
+        strict: [path: :string, name: :string, jobs: :string, repo: :string]
+      )
 
-    path = (opts[:path] || "priv/repo/migrations/")
-           |> Path.absname(Mix.Project.app_path)
+    path =
+      (opts[:path] || "priv/repo/migrations/")
+      |> Path.absname(Mix.Project.app_path())
 
     name = Macro.underscore(opts[:name] || "backy_setup")
 
@@ -38,9 +40,7 @@ defmodule Mix.Tasks.Backy.CreateMigration do
     data = migration_template(table: table, mod: mod)
 
     create_file(file, data)
-
   end
-
 
   # From Ecto
   defp timestamp do
@@ -48,10 +48,10 @@ defmodule Mix.Tasks.Backy.CreateMigration do
     "#{y}#{pad(m)}#{pad(d)}#{pad(hh)}#{pad(mm)}#{pad(ss)}"
   end
 
-  defp pad(i) when i < 10, do: << ?0, ?0 + i >>
+  defp pad(i) when i < 10, do: <<?0, ?0 + i>>
   defp pad(i), do: to_string(i)
 
-  embed_template :migration, """
+  embed_template(:migration, """
   defmodule <%= inspect @mod %> do
     use Ecto.Migration
 
@@ -84,6 +84,5 @@ defmodule Mix.Tasks.Backy.CreateMigration do
       execute "DROP TYPE <%= @table %>_status_type"
     end
   end
-  """
-
+  """)
 end

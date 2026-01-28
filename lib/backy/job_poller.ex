@@ -13,32 +13,48 @@ defmodule Backy.JobPoller do
     GenServer.start_link(__MODULE__, %State{}, name: __MODULE__)
   end
 
-  def init(state) do
-    import_jobs()
-    {:ok, state}
+  def start_link(_args) do
+    start_link()
   end
 
+  @impl true
+  def init(state) do
+    {:ok, %{state | timer: schedule_next_import()}}
+  end
+
+  defp schedule_next_import do
+    {:ok, timer} =
+      :timer.apply_after(poll_interval(), __MODULE__, :import_jobs, [])
+
+    timer
+  end
+
+  @impl true
   def terminate(_reason, state) do
     if state.timer do
       :timer.cancel(state.timer)
     end
   end
 
+  @impl true
   def handle_cast(:import_jobs, state) do
     if state.timer do
       {:ok, _} = :timer.cancel(state.timer)
     end
 
-    drain_queue(JobStore.reserve)
+    drain_queue(JobStore.reserve())
 
-    {:ok, timer} = :timer.apply_after(poll_interval(), __MODULE__, :import_jobs, [])
+    {:ok, timer} =
+      :timer.apply_after(poll_interval(), __MODULE__, :import_jobs, [])
+
     {:noreply, %{state | timer: timer}}
   end
 
   defp drain_queue(nil), do: nil
+
   defp drain_queue(%Job{} = job) do
-    job |> JobRunner.run
-    drain_queue(JobStore.reserve)
+    job |> JobRunner.run()
+    drain_queue(JobStore.reserve())
   end
 
   def import_jobs do
@@ -48,6 +64,4 @@ defmodule Backy.JobPoller do
   defp poll_interval do
     Backy.Config.get(:poll_interval)
   end
-
-
 end

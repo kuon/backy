@@ -1,26 +1,3 @@
-# Initial version of this file:
-#
-# Copyright (c) 2015 Joakim Kolsjö - https://github.com/joakimk/toniq
-#
-# MIT License
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy of
-# this software and associated documentation files (the "Software"), to deal in
-# the Software without restriction, including without limitation the rights to
-# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-# the Software, and to permit persons to whom the Software is furnished to do so,
-# subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
 defmodule Backy.JobConcurrencyLimiter do
   use GenServer
 
@@ -28,6 +5,15 @@ defmodule Backy.JobConcurrencyLimiter do
 
   def start_link do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
+  end
+
+  def start_link(_args) do
+    start_link()
+  end
+
+  @impl true
+  def init(_args) do
+    {:ok, %{}}
   end
 
   @doc """
@@ -41,8 +27,9 @@ defmodule Backy.JobConcurrencyLimiter do
   When a job is done this function tells the limiter about it by calling
   "confirm_run" which updates the current state and allows another job to run.
   """
-  def run(job),                       do: run(job, job.worker.max_concurrency)
-  defp run(job, :unlimited),          do: run_job(job)
+  def run(job), do: run(job, job.worker.max_concurrency())
+  defp run(job, :unlimited), do: run_job(job)
+
   defp run(job, _has_max_concurrency) do
     request_run(job)
 
@@ -64,6 +51,7 @@ defmodule Backy.JobConcurrencyLimiter do
     GenServer.cast(__MODULE__, {:confirm_run, job})
   end
 
+  @impl true
   def handle_cast({:request_run, job, caller}, state) do
     state =
       if below_max_concurrency?(state, job) do
@@ -75,6 +63,7 @@ defmodule Backy.JobConcurrencyLimiter do
     {:noreply, state}
   end
 
+  @impl true
   def handle_cast({:confirm_run, job}, state) do
     state = decrease_running_count(state, job)
 
@@ -93,31 +82,35 @@ defmodule Backy.JobConcurrencyLimiter do
   end
 
   defp run_next_pending_job(state, _job, []), do: state
+
   defp run_next_pending_job(state, job, pending_jobs) do
-    [ first_pending_job | pending_jobs ] = pending_jobs
+    [first_pending_job | pending_jobs] = pending_jobs
 
     state = run_now(state, first_pending_job)
 
-    update_worker_state(state, job,
-      %{ worker_state(state, job) | pending_jobs: pending_jobs }
-    )
+    update_worker_state(state, job, %{
+      worker_state(state, job)
+      | pending_jobs: pending_jobs
+    })
   end
 
   defp run_now(state, {job, caller}) do
-    send caller, {:run, job}
+    send(caller, {:run, job})
     increase_running_count(state, job)
   end
 
   defp run_later(state, {job, caller}) do
     worker_state = worker_state(state, job)
-    update_worker_state(state, job,
-      %{ worker_state | pending_jobs: worker_state.pending_jobs ++ [ {job, caller} ] }
-    )
+
+    update_worker_state(state, job, %{
+      worker_state
+      | pending_jobs: worker_state.pending_jobs ++ [{job, caller}]
+    })
   end
 
   # Running jobs count
   defp below_max_concurrency?(state, job) do
-    worker_state(state, job).running_count < job.worker.max_concurrency
+    worker_state(state, job).running_count < job.worker.max_concurrency()
   end
 
   defp increase_running_count(state, job) do
@@ -131,9 +124,11 @@ defmodule Backy.JobConcurrencyLimiter do
   defp update_running_count(state, job, difference) do
     running_count = worker_state(state, job).running_count + difference
 
-    state = update_worker_state(state, job,
-      %{ worker_state(state, job) | running_count: running_count }
-    )
+    state =
+      update_worker_state(state, job, %{
+        worker_state(state, job)
+        | running_count: running_count
+      })
 
     if running_count < 0 do
       raise "Job count should never be able to be less than zero, state is: #{inspect(state)}"
@@ -148,7 +143,6 @@ defmodule Backy.JobConcurrencyLimiter do
   end
 
   defp worker_state(state, job) do
-    Map.get(state, job.worker, %{ pending_jobs: [], running_count: 0 })
+    Map.get(state, job.worker, %{pending_jobs: [], running_count: 0})
   end
-
 end

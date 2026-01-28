@@ -16,8 +16,8 @@ defmodule Backy do
   """
   def enqueue(worker, arguments \\ []) do
     %Job{worker: worker, arguments: arguments}
-    |> JobStore.persist
-    |> JobRunner.run
+    |> JobStore.persist()
+    |> JobRunner.run()
   end
 
   @doc """
@@ -31,28 +31,26 @@ defmodule Backy do
   the worker, you will call this function to extend your job lifetime.
   """
   def touch(%Job{} = job) do
-    job |> JobProcess.touch |> JobStore.touch
+    job |> JobProcess.touch() |> JobStore.touch()
   end
 
   # See http://elixir-lang.org/docs/stable/elixir/Application.html
   # for more information on OTP Applications
   def start(_type, _args) do
-    import Supervisor.Spec, warn: false
-
     children = [
-      worker(JobStore, []),
-      worker(JobRunner, []),
-      worker(JobPoller, []),
-      worker(JobConcurrencyLimiter, []),
+      {JobStore, []},
+      {JobRunner, []},
+      {JobPoller, []},
+      {JobConcurrencyLimiter, []}
     ]
 
-    # Restart everything on failure
     opts = [
       strategy: :one_for_all,
       name: Backy.Supervisor,
       max_seconds: 30,
       max_restarts: 5
     ]
+
     Supervisor.start_link(children, opts)
   end
 end

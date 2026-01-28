@@ -15,7 +15,7 @@ The package can be installed as:
 
 ```elixir
 def deps do
-  [{:backy, "~> 0.0.16"}]
+  [{:backy, "~> 1.0.0"}]
 end
 ```
 
@@ -64,6 +64,17 @@ To create the job table, run:
 ```
 mix backy.setup
 ```
+
+Alternatively, you can create an Ecto migration instead:
+
+```
+mix backy.create_migration --path=priv/repo/migrations/ \
+                           --name=backy_setup \
+                           --repo=YourApp.Repo \
+                           --table=jobs
+```
+
+This is useful if you prefer using Ecto migrations for your database setup.
 
 ### Ecto/Phoenix configuration
 

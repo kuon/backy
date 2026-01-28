@@ -15,15 +15,17 @@ defmodule Mix.Tasks.Backy.Setup do
 
     {opts, _, _} = args |> OptionParser.parse(strict: [drop: :boolean])
 
-    config = Keyword.merge(Backy.Config.get(:db), [
-      extensions: [{Postgrex.Extensions.JSON, library: Poison}]
-    ])
+    config =
+      Keyword.merge(Backy.Config.get(:db),
+        extensions: [{Postgrex.Extensions.JSON, library: Poison}]
+      )
 
     {:ok, conn} = Postgrex.start_link(config)
 
     if opts[:drop] do
       drop_job_table(conn)
     end
+
     create_job_table(conn)
   end
 

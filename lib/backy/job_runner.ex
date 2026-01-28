@@ -9,20 +9,30 @@ defmodule Backy.JobRunner do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
   end
 
-  def run(%Job{id: nil}), do: raise "cannot run non persisted job"
+  def start_link(_args) do
+    start_link()
+  end
+
+  @impl true
+  def init(_args) do
+    {:ok, []}
+  end
+
+  def run(%Job{id: nil}), do: raise("cannot run non persisted job")
 
   def run(%Job{} = job) do
     GenServer.cast(__MODULE__, {:run, job})
     job
   end
 
+  @impl true
   def handle_cast({:run, job}, state) do
-    spawn_link fn ->
+    spawn_link(fn ->
       job
       |> run_job
       |> retry_job
       |> process_result
-    end
+    end)
 
     {:noreply, state}
   end
@@ -31,11 +41,12 @@ defmodule Backy.JobRunner do
 
   defp retry_job(result), do: retry_job(result, 1)
   defp retry_job({:ok, job}, _retry), do: {:ok, job}
+
   defp retry_job({:error, job, error}, retry) do
     if retry <= retry_count() do
       retry_delay(retry)
       |> trunc
-      |> :timer.sleep
+      |> :timer.sleep()
 
       job
       |> run_job
@@ -55,6 +66,7 @@ defmodule Backy.JobRunner do
 
   defp retry_delay(retry) do
     delay = Backy.Config.get(:retry_delay)
+
     if is_function(delay) do
       delay.(retry)
     else
@@ -66,4 +78,8 @@ defmodule Backy.JobRunner do
     Backy.Config.get(:retry_count)
   end
 
+  @impl true
+  def handle_call(_request, _from, state) do
+    {:reply, :ok, state}
+  end
 end

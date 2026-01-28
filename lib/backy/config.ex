@@ -3,7 +3,7 @@ defmodule Backy.Config do
     %{
       table_name: "jobs",
       retry_count: 3,
-      retry_delay: fn (retry) -> :math.pow(retry, 3) + 100 end,
+      retry_delay: fn retry -> :math.pow(retry, 3) + 100 end,
       poll_interval: 1000,
       delete_finished_jobs: true,
       db: [database: "backy"]
@@ -37,17 +37,23 @@ defmodule Backy.Config do
     end
 
     if is_nil(info.path) or not (info.path =~ ~r"^/([^/])+$") do
-      raise Backy.InvalidURLError, url: url, message: "path should be a database name"
+      raise Backy.InvalidURLError,
+        url: url,
+        message: "path should be a database name"
     end
 
-    destructure [username, password], info.userinfo && String.split(info.userinfo, ":")
+    destructure [username, password],
+                info.userinfo && String.split(info.userinfo, ":")
+
     "/" <> database = info.path
 
-    opts = [username: username,
-            password: password,
-            database: database,
-            hostname: info.host,
-            port:     info.port]
+    opts = [
+      username: username,
+      password: password,
+      database: database,
+      hostname: info.host,
+      port: info.port
+    ]
 
     Enum.reject(opts, fn {_k, v} -> is_nil(v) end)
   end

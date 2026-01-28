@@ -8,4 +8,3 @@ defmodule Backy.InvalidURLError do
     %__MODULE__{message: msg, url: url}
   end
 end
-
