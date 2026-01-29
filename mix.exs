@@ -4,7 +4,7 @@ defmodule Backy.Mixfile do
   def project do
     [
       app: :backy,
-      version: "1.0.1",
+      version: "1.0.2",
       elixir: "~> 1.14",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,

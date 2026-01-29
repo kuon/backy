@@ -15,7 +15,7 @@ The package can be installed as:
 
 ```elixir
 def deps do
-  [{:backy, "~> 1.0.0"}]
+  [{:backy, "~> 1.0.2"}]
 end
 ```
 
