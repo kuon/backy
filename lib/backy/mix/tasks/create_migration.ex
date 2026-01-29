@@ -26,7 +26,7 @@ defmodule Mix.Tasks.Backy.CreateMigration do
 
     path =
       (opts[:path] || "priv/repo/migrations/")
-      |> Path.absname(Mix.Project.app_path())
+      |> Path.expand(File.cwd!())
 
     name = Macro.underscore(opts[:name] || "backy_setup")
 
