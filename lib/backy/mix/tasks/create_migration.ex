@@ -68,10 +68,10 @@ defmodule Mix.Tasks.Backy.CreateMigration do
 
         add :error, :string, size: 128000
 
-        add :enqueued_at, :datetime, null: false
-        add :finished_at, :datetime
-        add :failed_at, :datetime
-        add :expires_at, :datetime, null: false
+        add :enqueued_at, :utc_datetime, null: false
+        add :finished_at, :utc_datetime
+        add :failed_at, :utc_datetime
+        add :expires_at, :utc_datetime, null: false
 
       end
       create index(:<%= @table %>, [:status])
