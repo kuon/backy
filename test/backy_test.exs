@@ -34,6 +34,17 @@ defmodule BackyTest do
 
   setup do
     Process.register(self(), :backy_test)
+
+    config =
+      Keyword.merge(Backy.Config.get(:db),
+        types: Backy.PostgrexTypes
+      )
+
+    table = Backy.Config.get(:table_name)
+
+    {:ok, pid} = Postgrex.start_link(config)
+
+    Postgrex.query!(pid, "TRUNCATE  #{table}")
     :ok
   end
 
@@ -88,8 +99,39 @@ defmodule BackyTest do
     assert Backy.JobStore.reserve() == nil
   end
 
+  test "store delayed jobs" do
+    # Only store jobs, and wait for DB import job to execute them
+
+    job =
+      store_delayed(1000, TestWorker, ["Hello", [name: "Jon Doe", foo: "bar"]])
+
+    assert(job.id)
+    job = store_delayed(5000, TestWorker, name: "Single arg")
+    assert(job.id)
+
+    :timer.sleep(500)
+
+    refute_receive {:job_has_been_run, name_was: "Jon Doe", arg1_was: "Hello"}
+
+    :timer.sleep(2000)
+
+    assert_receive {:job_has_been_run, name_was: "Jon Doe", arg1_was: "Hello"}
+
+    refute_receive {:job_has_been_run, name_was: "Single arg"}
+
+    :timer.sleep(4000)
+    assert_receive {:job_has_been_run, name_was: "Single arg"}
+
+    assert Backy.JobStore.reserve() == nil
+  end
+
   defp store_only(worker, arguments) do
     %Backy.Job{worker: worker, arguments: arguments}
     |> Backy.JobStore.persist(false)
+  end
+
+  defp store_delayed(ms, worker, arguments) do
+    %Backy.Job{worker: worker, arguments: arguments}
+    |> Backy.JobStore.persist_in(ms)
   end
 end

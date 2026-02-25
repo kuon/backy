@@ -21,6 +21,17 @@ defmodule Backy do
   end
 
   @doc """
+  Enqueue a job to be run in delay milliseconds.
+  The job will be persisted only.
+
+  This function returns only after the job has been persisted.
+  """
+  def enqueue_in(delay, worker, arguments \\ []) do
+    %Job{worker: worker, arguments: arguments}
+    |> JobStore.persist_in(delay)
+  end
+
+  @doc """
   Touch a job to avoid it to timeout.
 
   This is intended to be called from within worker if your job is long.

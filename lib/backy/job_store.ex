@@ -31,16 +31,54 @@ defmodule Backy.JobStore do
     {:ok, %State{db: pid, table: table}}
   end
 
-  def persist(job, reserved \\ true)
-
-  def persist(%Job{id: nil} = job, reserved) do
-    GenServer.call(__MODULE__, {:persist, job, reserved})
+  def persist(job) do
+    persist(job, true, 0)
   end
 
-  def persist(%Job{}, _reserved), do: raise("job already persisted")
+  def persist(job, reserved) when is_boolean(reserved) do
+    persist(job, reserved, 0)
+  end
+
+  def persist_in(job, delay) do
+    persist(job, false, delay)
+  end
+
+  def persist(%Job{id: nil} = job, reserved, enqueue_delay) do
+    GenServer.call(__MODULE__, {:persist, job, reserved, enqueue_delay})
+  end
+
+  def persist(%Job{}, _reserved, _enqueue_delay),
+    do: raise("job already persisted")
+
+  def touch(nil), do: nil
+  def touch(%Job{id: nil}), do: raise("job not persisted")
+
+  def touch(%Job{} = job) do
+    GenServer.call(__MODULE__, {:touch, job})
+  end
+
+  def reserve do
+    GenServer.call(__MODULE__, :reserve) |> touch
+  end
+
+  def mark_as_finished(%Job{id: nil}), do: raise("job not persisted")
+
+  def mark_as_finished(%Job{} = job) do
+    GenServer.call(__MODULE__, {:mark_as_finished, job})
+  end
+
+  def mark_as_failed(%Job{id: nil}, _error), do: raise("job not persisted")
+
+  def mark_as_failed(%Job{} = job, error) do
+    GenServer.call(__MODULE__, {:mark_as_failed, job, error})
+  end
 
   @impl true
-  def handle_call({:persist, job, reserved}, _from, %State{} = state) do
+  def handle_call(
+        {:persist, job, reserved, enqueue_delay},
+        _from,
+        %State{} = state
+      ) do
     args = normalize_args(job.arguments)
 
     res =
@@ -49,15 +87,20 @@ defmodule Backy.JobStore do
         "INSERT INTO #{state.table}
       (worker, arguments, status, expires_at, enqueued_at)
       VALUES
-      ($1, $2, $4, now() + ($3 || ' milliseconds')::INTERVAL, now())
+      (
+        $1, $2, $5,
+        now() + ($3 || ' milliseconds')::INTERVAL,
+        now() + ($4 || ' milliseconds')::INTERVAL
+      )
       RETURNING id",
         [
           Atom.to_string(job.worker),
           args,
           Integer.to_string(
-            (job.worker.requeue_delay() + job.worker.max_runtime())
+            (job.worker.requeue_delay() + job.worker.max_runtime() + enqueue_delay)
             |> trunc
           ),
+          Integer.to_string(enqueue_delay),
           if(reserved, do: "reserved", else: "new")
         ]
       )
@@ -127,8 +170,9 @@ defmodule Backy.JobStore do
        SET expires_at = now() + ('1 hour')::INTERVAL, status = 'reserved'
        WHERE id IN (
          SELECT id FROM #{state.table}
-         WHERE status = 'new' OR
-         (status = 'reserved' AND expires_at < now())
+         WHERE (status = 'new' OR
+         (status = 'reserved' AND expires_at < now()))
+         AND enqueued_at < now()
          LIMIT 1
        )
        RETURNING id, worker, arguments",
@@ -156,29 +200,6 @@ defmodule Backy.JobStore do
       _ ->
         {:reply, nil, state}
     end
-  end
-
-  def touch(nil), do: nil
-  def touch(%Job{id: nil}), do: raise("job not persisted")
-
-  def touch(%Job{} = job) do
-    GenServer.call(__MODULE__, {:touch, job})
-  end
-
-  def reserve do
-    GenServer.call(__MODULE__, :reserve) |> touch
-  end
-
-  def mark_as_finished(%Job{id: nil}), do: raise("job not persisted")
-
-  def mark_as_finished(%Job{} = job) do
-    GenServer.call(__MODULE__, {:mark_as_finished, job})
-  end
-
-  def mark_as_failed(%Job{id: nil}, _error), do: raise("job not persisted")
-
-  def mark_as_failed(%Job{} = job, error) do
-    GenServer.call(__MODULE__, {:mark_as_failed, job, error})
   end
 
   defp normalize_args(args) when is_list(args) do

@@ -15,7 +15,7 @@ The package can be installed as:
 
 ```elixir
 def deps do
-  [{:backy, "~> 1.0.2"}]
+  [{:backy, "~> 1.1.0"}]
 end
 ```
 
@@ -128,6 +128,10 @@ end
 
 ```elixir
 job = Backy.enqueue(TestWorker, name: "foo bar")
+
+# Delayed (delay in ms, here in 4 seconds)
+
+job = Backy.enqueue_in(4000, TestWorker, name: "foo bar")
 ```
 
 ## Contributors
