@@ -64,6 +64,8 @@ defmodule Backy.JobProcess do
       :ok ->
         :ok
     end
-    Process.cancel_timer(timer)
+    |> tap(fn _ ->
+      Process.cancel_timer(timer)
+    end)
   end
 end
