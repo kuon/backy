@@ -126,12 +126,12 @@ defmodule BackyTest do
   end
 
   defp store_only(worker, arguments) do
-    %Backy.Job{worker: worker, arguments: arguments}
+    Backy.JobStore.new_job(worker, arguments)
     |> Backy.JobStore.persist(false)
   end
 
   defp store_delayed(ms, worker, arguments) do
-    %Backy.Job{worker: worker, arguments: arguments}
+    Backy.JobStore.new_job(worker, arguments)
     |> Backy.JobStore.persist_in(ms)
   end
 end

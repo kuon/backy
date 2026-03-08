@@ -50,7 +50,7 @@ defmodule Backy do
   end
 
   defp do_create(worker, arguments) do
-    %Job{worker: worker, arguments: arguments}
+    JobStore.new_job(worker, arguments)
   end
 
 

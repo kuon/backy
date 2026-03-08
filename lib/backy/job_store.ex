@@ -18,6 +18,10 @@ defmodule Backy.JobStore do
     start_link()
   end
 
+  def new_job(worker, arguments) do
+    %Job{worker: worker, arguments: normalize_args(arguments)}
+  end
+
   @impl true
   def init(_state) do
     config =
@@ -79,7 +83,7 @@ defmodule Backy.JobStore do
         _from,
         %State{} = state
       ) do
-    args = normalize_args(job.arguments)
+    args = job.arguments
 
     res =
       Postgrex.query!(
