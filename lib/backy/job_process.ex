@@ -38,12 +38,12 @@ defmodule Backy.JobProcess do
     end
   end
 
-  defp wait_for_result(pid, max_runtime, timer \\ nil) do
+  defp wait_for_result(pid, max_runtime, timer) do
     receive do
       {:DOWN, _ref, :process, _pid, :normal} ->
         # both errors and successes result in a normal exit,
         # wait for more information
-        wait_for_result(pid, max_runtime)
+        wait_for_result(pid, max_runtime, timer)
 
       {:DOWN, _ref, :process, _pid, error} ->
         Exception.format_banner(:error, error)
@@ -53,23 +53,17 @@ defmodule Backy.JobProcess do
 
       :timeout ->
         Process.exit(pid, :kill)
-        wait_for_result(pid, max_runtime)
+        wait_for_result(pid, max_runtime, timer)
 
       :touch ->
-        timer =
-          case timer do
-            nil ->
-              nil
-
-            timer ->
-              Process.cancel_timer(timer)
-              Process.send_after(self(), :timeout, max_runtime)
-          end
+        Process.cancel_timer(timer)
+        timer = Process.send_after(self(), :timeout, max_runtime)
 
         wait_for_result(pid, max_runtime, timer)
 
       :ok ->
         :ok
     end
+    Process.cancel_timer(timer)
   end
 end
