@@ -65,7 +65,11 @@ defmodule Backy do
   the worker, you will call this function to extend your job lifetime.
   """
   def touch(%Job{} = job) do
-    job |> JobProcess.touch() |> JobStore.touch()
+    if Backy.Config.get(:inline) do
+      job
+    else
+      job |> JobProcess.touch() |> JobStore.touch()
+    end
   end
 
   # See http://elixir-lang.org/docs/stable/elixir/Application.html
