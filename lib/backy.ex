@@ -15,9 +15,18 @@ defmodule Backy do
   This function returns only after the job has been persisted.
   """
   def enqueue(worker, arguments \\ []) do
-    %Job{worker: worker, arguments: arguments}
+    do_create(worker, arguments)
+    |> do_enqueue(Backy.Config.get(:inline))
+  end
+
+  defp do_enqueue(%Job{} = job, false) do
+    job
     |> JobStore.persist()
     |> JobRunner.run()
+  end
+
+  defp do_enqueue(%Job{} = job, true) do
+    JobProcess.run(job)
   end
 
   @doc """
@@ -27,9 +36,23 @@ defmodule Backy do
   This function returns only after the job has been persisted.
   """
   def enqueue_in(delay, worker, arguments \\ []) do
-    %Job{worker: worker, arguments: arguments}
+    do_create(worker, arguments)
+    |> do_enqueue_in(delay, Backy.Config.get(:inline))
+  end
+
+  defp do_enqueue_in(%Job{} = job, delay, false) do
+    job
     |> JobStore.persist_in(delay)
   end
+
+  defp do_enqueue_in(%Job{} = job, _, true) do
+    JobProcess.run(job)
+  end
+
+  defp do_create(worker, arguments) do
+    %Job{worker: worker, arguments: arguments}
+  end
+
 
   @doc """
   Touch a job to avoid it to timeout.

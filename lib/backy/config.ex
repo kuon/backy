@@ -1,6 +1,7 @@
 defmodule Backy.Config do
   defp default_config do
     %{
+      inline: false,
       table_name: "jobs",
       retry_count: 3,
       retry_delay: fn retry -> :math.pow(retry, 3) + 100 end,

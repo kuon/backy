@@ -76,6 +76,17 @@ mix backy.create_migration --path=priv/repo/migrations/ \
 
 This is useful if you prefer using Ecto migrations for your database setup.
 
+## Inline mode
+
+When running tests, set runner to inline,
+
+```
+config :backy, inline: true
+```
+
+This will run all jobs synchronously. In this mode, enqueue_in will ALSO run
+jobs immediatly.
+
 ### Ecto/Phoenix configuration
 
 If you use backy with ecto/phoenix, you may include backy mix tasks
