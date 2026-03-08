@@ -66,7 +66,7 @@ defmodule Backy do
   """
   def touch(%Job{} = job) do
     if Backy.Config.get(:inline) do
-      job
+      job |> JobProcess.touch()
     else
       job |> JobProcess.touch() |> JobStore.touch()
     end
